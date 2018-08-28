@@ -1,0 +1,24 @@
+{
+  "name": "SGDC bot",
+  "description": "\"A discord bot made for the use of SGDC. \"",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/numbahs/SGDC_BOT"
+  },
+  "author": "Albert Tang",
+  "license": "ISC",
+  "bugs": {
+    "url": "git+https://github.com/numbahs/SGDC_BOT/issues"
+  },
+  "homepage": "https://github.com/numbahs/SGDC_BOT#readme",
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "fs-extra": "^6.0.1"
+  }
+}
