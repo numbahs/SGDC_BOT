@@ -1,5 +1,5 @@
 {
-  "name": "SGDC bot",
+  "name": "sgdc_bot",
   "description": "\"A discord bot made for the use of SGDC. \"",
   "version": "1.0.0",
   "main": "index.js",

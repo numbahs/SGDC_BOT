@@ -7,48 +7,112 @@ const fs = require('fs-extra');
 const start = new Date(); // credit to Adam Gincel, using to ignore old messages
 const discord = require('discord.js');
 const { token, permissions } = require('./discordToken.json');
+const usageMessage =
+  '\
+/role <SpaceSeparatedValue> adds the SpaceSeparatedValue as roles to the user\n\
+/removeRole <SpaceSeparatedValue> removes the SpaceSeparatedValue of roles from the user\
+';
 
 function makeRoleNameToRole(roles) {
   let ret = {};
-  for (let snowflake in roles) {
-    for (let role in roles[snowflake]) {
-      ret[role.name] = role;
+  for (let [, role] of roles) {
+    if (role.position < 5) {
+      ret[role.name.toLowerCase()] = role;
     }
   }
   return ret;
 }
 
-function checkRoles(rolesMap, rolesToCheck) {
-  let rolesToAdd = [],
-    rolesAdded = [];
+function checkRoles(rolesMap, rolesToCheck, memberRolesMap, adding) {
+  let toDo = {},
+    toError = [];
 
-  for (let role of rolesToCheck) {
-    const toPush = rolesMap[role];
-
-    if (toPush && toPush.position > 3) {
-      rolesToAdd.push(toPush);
-      rolesAdded.push(role);
+  for (let roleName of rolesToCheck) {
+    const memberRole = memberRolesMap[roleName],
+      role = rolesMap[roleName];
+    if (memberRole && adding) {
+      toError.push(memberRole.name);
+    } else if (memberRole && !adding) {
+      toDo[memberRole.name] = memberRole;
+    } else if (role && adding) {
+      toDo[role.name] = role;
+    } else {
+      toError(roleName);
     }
   }
 
-  return { rolesToAdd, rolesAdded };
+  return { toDo, toError };
+}
+
+async function roleHandling(roles, content, member, adding) {
+  const { toDo, toError } = checkRoles(
+    makeRoleNameToRole(roles),
+    content,
+    makeRoleNameToRole(member.roles),
+    adding
+  );
+  const rolesToDoNames = Object.keys(toDo),
+    rolesToDoValues = Object.values(toDo);
+  let botMsg, errorMsg;
+  if (rolesToDoNames.length) {
+    if (adding) {
+      await member.addRoles(rolesToDoValues);
+    } else {
+      await member.removeRoles(rolesToDoValues);
+    }
+    botMsg = `${member.displayName} was ${
+      adding ? 'added to' : 'removed from'
+    } ${rolesToDoNames.join(', ')}`;
+  } else {
+    botMsg = `Nothing was done for ${member.displayName}`;
+  }
+  const errorLength = toError.length;
+  if (errorLength) {
+    const moreThanOne = errorLength > 1;
+    errorMsg = `${toError.join(', ')} ${
+      moreThanOne ? 'do' : 'does'
+    } not exist or ${
+      adding
+        ? `you are already in ${moreThanOne ? 'them' : 'it'}`
+        : `you are not in ${moreThanOne ? 'them' : 'it'}`
+    }`;
+  }
+  return { botMsg, errorMsg };
+}
+
+async function sendMessage(channel, message) {
+  await channel.send(message);
 }
 
 async function handleMessage(msg) {
-  const { content } = msg;
+  const [command, ...rest] = msg.content.toLowerCase().split(' '),
+    roles = msg.guild.roles,
+  const { channel, member } = msg;
 
-  if (content.slice(0, 6) === '/usage') {
-    return 'msg';
-  }
-
-  if (content.slice(0, 5) === '/role') {
-    const { rolesToAdd, rolesAdded } = checkRoles(
-      makeRoleNameToRole(msg.guild.roles),
-      content.slice(6).split(' ')
+  if (command === '/usage') {
+    await sendMessage(channel, usageMessage);
+  } else if (command === '/role') {
+    const { botMsg, errorMsg } = await roleHandling(
+      roles,
+      rest,
+      member,
+      true
     );
-
-    await msg.member.addRoles(rolesToAdd);
-    console.log(`${msg.author.username} was added to ${rolesAdded}`);
+    await sendMessage(channel, botMsg);
+    if (errorMsg) {
+      await sendMessage(channel, errorMsg);
+    }
+  } else if (command === '/removerole') {
+    const { botMsg, errorMsg } = await roleHandling(
+      roles,
+      rest,
+      member,
+      false
+    );
+    await sendMessage(channel, botMsg);
+    if (errorMsg) {
+      await sendMessage(channel, errorMsg);
+    }
   }
 }
 
@@ -61,10 +125,7 @@ async function main() {
 
   discordBot.on('message', async msg => {
     if (!msg.system) {
-      const botMsg = await handleMessage(msg);
-      if (botMsg) {
-        await discordBot.user.send(botMsg);
-      }
+      await handleMessage(msg);
     }
   });
 }
