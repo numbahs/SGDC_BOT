@@ -115,10 +115,10 @@ async function main() {
 
   console.log('Logging in');
   await discordBot.login(token.toString('utf8'));
-  console.log('Logged in');
+  console.log(`Logged in as ${discordBot.user.username}`);
 
   discordBot.on('message', async msg => {
-    if (!msg.system) {
+    if (!msg.system && !msg.author.bot) {
       await handleMessage(msg);
     }
   });
