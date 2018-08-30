@@ -38,6 +38,8 @@ function checkRoles(rolesToCheck, memberRolesMap, adding) {
       toDo[memberRole.name] = memberRole;
     } else if (role && adding) {
       toDo[role.name] = role;
+    } else if (role && !adding) {
+      toError.push(role.name);
     } else {
       toError.push(roleName);
     }
