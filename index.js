@@ -13,9 +13,11 @@ const usageMessage =
 /removeRole <SpaceSeparatedValue> removes the SpaceSeparatedValue of roles from the user\
 ';
 
+let roleMap = {};
+
 function makeRoleNameToRole(roles) {
   let ret = {};
-  for (let [, role] of roles) {
+  for (let role of roles.array()) {
     if (role.position < 5) {
       ret[role.name.toLowerCase()] = role;
     }
@@ -23,13 +25,13 @@ function makeRoleNameToRole(roles) {
   return ret;
 }
 
-function checkRoles(rolesMap, rolesToCheck, memberRolesMap, adding) {
+function checkRoles(rolesToCheck, memberRolesMap, adding) {
   let toDo = {},
     toError = [];
 
   for (let roleName of rolesToCheck) {
     const memberRole = memberRolesMap[roleName],
-      role = rolesMap[roleName];
+      role = roleMap[roleName];
     if (memberRole && adding) {
       toError.push(memberRole.name);
     } else if (memberRole && !adding) {
@@ -44,9 +46,8 @@ function checkRoles(rolesMap, rolesToCheck, memberRolesMap, adding) {
   return { toDo, toError };
 }
 
-async function roleHandling(roles, content, member, adding) {
+async function roleHandling(content, member, adding) {
   const { toDo, toError } = checkRoles(
-    makeRoleNameToRole(roles),
     content,
     makeRoleNameToRole(member.roles),
     adding
@@ -92,16 +93,10 @@ async function handleMessage(msg) {
     await sendMessage(msg.author, usageMessage, false);
     return;
   }
-  const roles = msg.guild.roles,
-    { channel, member } = msg;
+  const { channel, member } = msg;
   const [matched, , remove] = command.match(/(\/(remove)*role)*$/);
   if (matched) {
-    const { botMsg, errorMsg } = await roleHandling(
-      roles,
-      rest,
-      member,
-      !remove
-    );
+    const { botMsg, errorMsg } = await roleHandling(rest, member, !remove);
     await sendMessage(channel, botMsg, true);
     if (errorMsg) {
       await sendMessage(channel, errorMsg, true);
@@ -116,11 +111,28 @@ async function main() {
   console.log('Logging in');
   await discordBot.login(token.toString('utf8'));
   console.log(`Logged in as ${discordBot.user.username}`);
+  roleMap = makeRoleNameToRole(discordBot.guilds.array()[0].roles);
 
   discordBot.on('message', async msg => {
     if (!msg.system && !msg.author.bot) {
       await handleMessage(msg);
     }
+  });
+
+  discordBot.on('roleCreate', role => {
+    roleMap[role.name.toLowerCase()] = role;
+    console.log(`${role.name} was created`);
+  });
+
+  discordBot.on('roleDelete', role => {
+    delete roleMap[role.name.toLowerCase()];
+    console.log(`${role.name} was deleted`);
+  });
+
+  discordBot.on('roleUpdate', (oldRole, newRole) => {
+    delete roleMap[oldRole.name.toLowerCase()];
+    roleMap[newRole.name.toLowerCase()] = newRole;
+    console.log(`${oldRole.name} has been updated to ${newRole.name}`);
   });
 }
 
