@@ -37,7 +37,7 @@ function checkRoles(rolesMap, rolesToCheck, memberRolesMap, adding) {
     } else if (role && adding) {
       toDo[role.name] = role;
     } else {
-      toError(roleName);
+      toError.push(roleName);
     }
   }
 
@@ -86,28 +86,20 @@ async function sendMessage(channel, message) {
 
 async function handleMessage(msg) {
   const [command, ...rest] = msg.content.toLowerCase().split(' '),
-    roles = msg.guild.roles,
+    roles = msg.guild.roles;
   const { channel, member } = msg;
 
   if (command === '/usage') {
     await sendMessage(channel, usageMessage);
-  } else if (command === '/role') {
+    return;
+  }
+  const [matched, , remove] = command.match(/(\/(remove)*role)*$/);
+  if (matched) {
     const { botMsg, errorMsg } = await roleHandling(
       roles,
       rest,
       member,
-      true
-    );
-    await sendMessage(channel, botMsg);
-    if (errorMsg) {
-      await sendMessage(channel, errorMsg);
-    }
-  } else if (command === '/removerole') {
-    const { botMsg, errorMsg } = await roleHandling(
-      roles,
-      rest,
-      member,
-      false
+      !remove
     );
     await sendMessage(channel, botMsg);
     if (errorMsg) {
