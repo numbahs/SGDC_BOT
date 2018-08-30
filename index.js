@@ -80,15 +80,16 @@ async function roleHandling(roles, content, member, adding) {
   return { botMsg, errorMsg };
 }
 
-async function sendMessage(location, message) {
-  (await location.send(message)).delete(5000);
+async function sendMessage(location, message, del) {
+  const sentMessage = await location.send(message);
+  if (del) sentMessage.delete(5000);
 }
 
 async function handleMessage(msg) {
   const [command, ...rest] = msg.content.toLowerCase().split(' ');
 
   if (command === '/usage') {
-    await sendMessage(msg.author, usageMessage);
+    await sendMessage(msg.author, usageMessage, false);
     return;
   }
   const roles = msg.guild.roles,
@@ -101,9 +102,9 @@ async function handleMessage(msg) {
       member,
       !remove
     );
-    await sendMessage(channel, botMsg);
+    await sendMessage(channel, botMsg, true);
     if (errorMsg) {
-      await sendMessage(channel, errorMsg);
+      await sendMessage(channel, errorMsg, true);
     }
     msg.delete(5000);
   }
