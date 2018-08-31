@@ -75,6 +75,7 @@ async function handleMessage(msg, roleMap) {
 
   if (command === '/usage') {
     await sendMessage(msg.author, usageMessage, false);
+    msg.delete(5000);
     return;
   }
   const { channel, member } = msg;
