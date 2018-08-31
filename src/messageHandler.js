@@ -65,19 +65,18 @@ async function roleHandling(roleMap, content, member, adding) {
   return { botMsg, errorMsg };
 }
 
-async function sendMessage(location, message, del) {
-  const sentMessage = await location.send(message);
-  if (del) sentMessage.delete(5000);
+async function sendMessage(location, message) {
+  return await location.send(message);
 }
 
-async function handleMessage(msg, roleMap) {
+async function messageDelegate(msg, roleMap) {
   const [command, ...rest] = msg.content.toLowerCase().split(' ');
 
   if (command === '/usage') {
-    await sendMessage(msg.author, usageMessage, false);
-    msg.delete(5000);
-    return;
+    sendMessage(msg.author, usageMessage);
+    return [msg];
   }
+  let toDelete = [];
   const { channel, member } = msg;
   const [matched, , remove] = command.match(/(\/(remove)*role)*$/);
   if (matched) {
@@ -87,11 +86,19 @@ async function handleMessage(msg, roleMap) {
       member,
       !remove
     );
-    await sendMessage(channel, botMsg, true);
+    toDelete.push(msg);
+    toDelete.push(sendMessage(channel, botMsg));
     if (errorMsg) {
-      await sendMessage(channel, errorMsg, true);
+      toDelete.push(sendMessage(channel, errorMsg));
     }
-    msg.delete(5000);
+  }
+  return toDelete;
+}
+
+async function handleMessage(msg, roleMap) {
+  let toDelete = await messageDelegate(msg, roleMap);
+  for (let message of toDelete) {
+    (await message).delete(5000);
   }
 }
 
