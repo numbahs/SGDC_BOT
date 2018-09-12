@@ -1,7 +1,7 @@
 function makeRoleNameToRole(roles) {
   let ret = {};
   for (let role of roles.array()) {
-    if (role.position < 5) {
+    if (1 <= role.position && role.position <= 3 ) {
       ret[role.name.toLowerCase()] = role;
     }
   }

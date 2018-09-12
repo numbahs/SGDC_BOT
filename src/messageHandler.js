@@ -1,10 +1,5 @@
 const utils = require('./utils');
-
-const usageMessage =
-  '\
-/role <SpaceSeparatedValue> adds the SpaceSeparatedValue as roles to the user\n\
-/removeRole <SpaceSeparatedValue> removes the SpaceSeparatedValue of roles from the user\
-';
+const { usageMessage, sourceMessage } = require('./messages.json');
 
 function checkRoles(roleMap, rolesToCheck, memberRolesMap, adding) {
   let toDo = {},
@@ -74,6 +69,12 @@ async function messageDelegate(msg, roleMap) {
 
   if (command === '/usage') {
     sendMessage(msg.author, usageMessage);
+    return [msg];
+  } if (command === '/src') {
+    sendMessage(msg.author, sourceMessage);
+    return [msg];
+  } if (command === '/roles') {
+    sendMessage(msg.author, Object.keys(roleMap).join(', '));
     return [msg];
   }
   let toDelete = [];

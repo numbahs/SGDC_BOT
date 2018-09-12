@@ -1,0 +1,5 @@
+{
+  "usageMessage":"/role <SpaceSeparatedValue> adds the SpaceSeparatedValue as roles to the user\n/roles sends the lower case version of the available roles to assign yourself to\n/removeRole <SpaceSeparatedValue> removes the SpaceSeparatedValue of roles from the user\n/src sends the github link to the repository to the person that requested it\n/usage sends this usage message to the person that requested it",
+  "sourceMessage":"https://github.com/numbahs/SGDC_BOT"
+}
+
