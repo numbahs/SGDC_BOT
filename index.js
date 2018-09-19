@@ -15,28 +15,47 @@ async function main() {
   console.log('Logging in');
   await discordBot.login(token.toString('utf8'));
   console.log(`Logged in as ${discordBot.user.username}`);
-  roleMap = utils.makeRoleNameToRole(discordBot.guilds.array()[0].roles);
+  const sgdcGuild = discordBot.guilds.array()[0];
+  let myPermissions = sgdcGuild.me.highestRole.position;
+  roleMap = utils.makeRoleNameToRole(sgdcGuild.roles, myPermissions);
 
-  discordBot.on('message', async msg => {
+  discordBot.on('message', async (msg) => {
     if (!msg.system && !msg.author.bot) {
-      await messageHandler.handleMessage(msg, roleMap);
+      await messageHandler.handleMessage(msg, roleMap, myPermissions);
     }
   });
 
-  discordBot.on('roleCreate', role => {
-    roleMap[role.name.toLowerCase()] = role;
-    console.log(`${role.name} was created`);
+  discordBot.on('roleCreate', (role) => {
+    myPermissions = sgdcGuild.me.highestRole.position;
+    if(role.position < myPermissions) {
+      roleMap[role.name.toLowerCase()] = role;
+      console.log(`${role.name} was created`);
+    }
   });
 
-  discordBot.on('roleDelete', role => {
-    delete roleMap[role.name.toLowerCase()];
-    console.log(`${role.name} was deleted`);
+  discordBot.on('roleDelete', (role) => {
+    myPermissions = sgdcGuild.me.highestRole.position;
+    toDelete = role.name.toLowerCase();
+    if(rolemap[toDelete]) {
+      delete roleMap[toDelete];
+      console.log(`${role.name} was deleted`);
+    }
   });
 
   discordBot.on('roleUpdate', (oldRole, newRole) => {
-    delete roleMap[oldRole.name.toLowerCase()];
-    roleMap[newRole.name.toLowerCase()] = newRole;
-    console.log(`${oldRole.name} has been updated to ${newRole.name}`);
+    myPermissions = sgdcGuild.me.highestRole.position;
+    toUpdate = oldRole.name.toLowerCase();
+    if(roleMap[toUpdate]) {
+      delete roleMap[toUpdate];
+      if(newRole.position < myPermissions) {
+        roleMap[newRole.name.toLowerCase()] = newRole;
+        console.log(`${oldRole.name} has been updated to ${newRole.name}`);
+      }
+    }
+  });
+
+  discordBot.on('error', (err) => {
+    console.error(err);
   });
 }
 

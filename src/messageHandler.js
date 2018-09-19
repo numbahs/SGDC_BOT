@@ -24,13 +24,7 @@ function checkRoles(roleMap, rolesToCheck, memberRolesMap, adding) {
   return { toDo, toError };
 }
 
-async function roleHandling(roleMap, content, member, adding) {
-  const { toDo, toError } = checkRoles(
-    roleMap,
-    content,
-    utils.makeRoleNameToRole(member.roles),
-    adding
-  );
+async function roleHandling(member, adding, toDo, toError) {
   const rolesToDoNames = Object.keys(toDo),
     rolesToDoValues = Object.values(toDo);
   let botMsg, errorMsg;
@@ -64,7 +58,7 @@ async function sendMessage(location, message) {
   return await location.send(message);
 }
 
-async function messageDelegate(msg, roleMap) {
+async function messageDelegate(msg, roleMap, highestPermissions) {
   const [command, ...rest] = msg.content.toLowerCase().split(' ');
 
   if (command === '/usage') {
@@ -79,13 +73,19 @@ async function messageDelegate(msg, roleMap) {
   }
   let toDelete = [];
   const { channel, member } = msg;
-  const [matched, , remove] = command.match(/(\/(remove)*role)*$/);
+  const [matched, remove] = command.match(/\/(remove)?role$/) || [];
   if (matched) {
-    const { botMsg, errorMsg } = await roleHandling(
+    const { toDo, toError } = checkRoles(
       roleMap,
       rest,
+      utils.makeRoleNameToRole(member.roles, highestPermissions),
+      !remove 
+    );
+    const { botMsg, errorMsg } = await roleHandling(
       member,
-      !remove
+      !remove,
+      toDo,
+      toError
     );
     toDelete.push(msg);
     toDelete.push(sendMessage(channel, botMsg));
@@ -96,8 +96,8 @@ async function messageDelegate(msg, roleMap) {
   return toDelete;
 }
 
-async function handleMessage(msg, roleMap) {
-  let toDelete = await messageDelegate(msg, roleMap);
+async function handleMessage(msg, roleMap, highestPermissions) {
+  let toDelete = await messageDelegate(msg, roleMap, highestPermissions);
   for (let message of toDelete) {
     (await message).delete(5000);
   }
