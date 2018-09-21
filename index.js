@@ -36,7 +36,7 @@ async function main() {
   discordBot.on('roleDelete', (role) => {
     myPermissions = sgdcGuild.me.highestRole.position;
     toDelete = role.name.toLowerCase();
-    if(rolemap[toDelete]) {
+    if(roleMap[toDelete]) {
       delete roleMap[toDelete];
       console.log(`${role.name} was deleted`);
     }
