@@ -4,7 +4,7 @@
  */
 
 const discord = require('discord.js');
-const { token, permissions } = require('./discordToken.json');
+const { token, permissions } = process.env || require('./discordToken.json');
 const { messageHandler, utils } = require('./src');
 
 let roleMap = {};
