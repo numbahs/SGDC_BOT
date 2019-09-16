@@ -7,6 +7,15 @@ const discord = require('discord.js');
 const { token, permissions } = process.env || require('./discordToken.json');
 const { messageHandler, utils } = require('./src');
 
+const timeout = 1000 * 60 * 15;
+
+function ping() {
+  console.log("Healthy Bot");
+  setTimeout(() => {
+    ping()
+  }, timeout);
+}
+
 let roleMap = {};
 
 async function main() {
@@ -57,6 +66,8 @@ async function main() {
   discordBot.on('error', (err) => {
     console.error(err);
   });
+  
+  ping();
 }
 
 main().catch(err => {
