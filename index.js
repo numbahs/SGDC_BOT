@@ -4,7 +4,7 @@
  */
 
 const discord = require('discord.js');
-const { token, permissions } = process.env || require('./discordToken.json');
+const token = process.env.token || require('./discordToken.json').token;
 const { messageHandler, utils } = require('./src');
 
 const timeout = 1000 * 60 * 15;
